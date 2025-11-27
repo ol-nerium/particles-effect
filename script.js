@@ -4,44 +4,50 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height); // x0 y0 x1 y1
-gradient.addColorStop(0, "white");
-gradient.addColorStop(1, "gold");
+let gradient = ctx.createLinearGradient(0, 0, 0, canvas.height); // x0 y0 x1 y1
+gradient.addColorStop(0, "pink");
+gradient.addColorStop(0.5, "red");
+gradient.addColorStop(1, "magenta");
 
 ctx.fillStyle = gradient;
-ctx.strokeStyle = gradient;
+// ctx.strokeStyle = gradient;
 
 class Particle {
   constructor(effect, index) {
     this.index = index;
     this.effect = effect;
-    this.radius = Math.floor(Math.random() * 10 + 1);
-
+    this.radius = Math.floor(Math.random() * 8 + 8);
+    this.minRadius = this.radius;
+    this.maxRadius = this.radius * 5;
     this.x =
       this.radius + Math.random() * (this.effect.width - this.radius * 2);
     this.y =
       this.radius + Math.random() * (this.effect.height - 2 * this.radius);
-    this.vx = Math.random() * 1 - 0.5;
-    this.vy = Math.random() * 1 - 0.5;
+    this.vx = Math.random() * 0.2 - 0.1;
+    this.vy = Math.random() * 0.2 - 0.1;
 
-    this.pushX = 0;
-    this.pushY = 0;
-    this.friction = 0.8;
+    // this.pushX = 0;
+    // this.pushY = 0;
+    // this.friction = 0.8;
   }
   draw(context) {
-    // if (this.index % 50) {
-    //   // "sunrise" style effect
-    //   context.save();
-    //   context.globalAlpha = 0.6;
-    //   context.beginPath();
-    //   context.moveTo(this.x, this.y);
-    //   context.lineTo(this.effect.mouse.x, this.effect.mouse.y);
-    //   context.stroke();
-    //   context.restore();
-    // }
     context.beginPath();
     context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     context.fill();
+    context.stroke();
+
+    context.save();
+    context.fillStyle = "white";
+    context.beginPath();
+    context.arc(
+      this.x - this.radius * 0.2,
+      this.y - this.radius * 0.3,
+      this.radius * 0.6,
+      0,
+      Math.PI * 2
+    );
+    context.fill();
+    context.restore();
   }
 
   update() {
@@ -50,12 +56,8 @@ class Particle {
       const dy = this.y - this.effect.mouse.y;
       const distance = Math.hypot(dx, dy);
       const force = this.effect.mouse.radius / distance;
-      if (distance < this.effect.mouse.radius) {
-        const angle = Math.atan2(dy, dx); // counterclockwise angle in radians between the positive oX and a line projected from 0,0 towards target (x,y)
-        // Value in the range of -PI..+PI
-
-        this.pushY += Math.sin(angle) * force;
-        this.pushX += Math.cos(angle) * force;
+      if (distance < this.effect.mouse.radius && this.radius < this.maxRadius) {
+        this.radius += 2;
       }
     }
 
@@ -76,8 +78,8 @@ class Particle {
       this.vy *= -1;
     }
 
-    this.x += (this.pushX *= this.friction) + this.vx;
-    this.y += (this.pushY *= this.friction) + this.vy;
+    this.x += this.vx;
+    this.y += this.vy;
   }
 
   reset() {
@@ -168,12 +170,12 @@ class Effect {
     this.width = width;
     this.height = height;
     // resize event resets context to its default so:
-    const gradient = ctx.createLinearGradient(0, 0, width, height); // x0 y0 x1 y1
-    gradient.addColorStop(0, "white");
-    gradient.addColorStop(0.5, "gold");
-    gradient.addColorStop(1, "orangered");
+    gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height); // x0 y0 x1 y1
+    gradient.addColorStop(0, "pink");
+    gradient.addColorStop(0.5, "red");
+    gradient.addColorStop(1, "magenta");
     this.context.fillStyle = gradient;
-    this.context.strokeStyle = "white";
+    // this.context.strokeStyle = "white";
 
     this.particles.forEach((particle) => particle.reset());
   }
