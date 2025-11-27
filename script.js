@@ -3,23 +3,20 @@ const canvas = document.getElementById("canvas1");
 const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-// console.log("ctx", ctx);
 
-const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height); // x0 y0 x1 y1
+const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height); // x0 y0 x1 y1
 gradient.addColorStop(0, "white");
-gradient.addColorStop(0.5, "gold");
-gradient.addColorStop(1, "orangered");
-ctx.fillStyle = gradient;
-ctx.strokeStyle = "white";
+gradient.addColorStop(1, "gold");
 
-// ctx.strokeStyle = "white";
-// ctx.lineWidth = 5;
-// ctx.fillRect(50, 50, 20, 100); //x, y, w, h
+ctx.fillStyle = gradient;
+ctx.strokeStyle = gradient;
 
 class Particle {
-  constructor(effect) {
+  constructor(effect, index) {
+    this.index = index;
     this.effect = effect;
     this.radius = Math.floor(Math.random() * 10 + 1);
+
     this.x =
       this.radius + Math.random() * (this.effect.width - this.radius * 2);
     this.y =
@@ -32,13 +29,19 @@ class Particle {
     this.friction = 0.8;
   }
   draw(context) {
-    // context.fillStyle = `hsl(${this.x * 0.5}, 100%, 50%)`;
-    // hue saturation lightness
-
+    // if (this.index % 50) {
+    //   // "sunrise" style effect
+    //   context.save();
+    //   context.globalAlpha = 0.6;
+    //   context.beginPath();
+    //   context.moveTo(this.x, this.y);
+    //   context.lineTo(this.effect.mouse.x, this.effect.mouse.y);
+    //   context.stroke();
+    //   context.restore();
+    // }
     context.beginPath();
     context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     context.fill();
-    // context.stroke();
   }
 
   update() {
@@ -53,7 +56,6 @@ class Particle {
 
         this.pushY += Math.sin(angle) * force;
         this.pushX += Math.cos(angle) * force;
-        // console.log(angle, Math.sin(angle));
       }
     }
 
@@ -73,13 +75,6 @@ class Particle {
       this.y = this.effect.height - this.radius;
       this.vy *= -1;
     }
-    // this.x += this.vx;
-    // if (this.x > this.effect.width - this.radius || this.x < this.radius)
-    //   this.vx *= -1;
-
-    // this.y += this.vy;
-    // if (this.y > this.effect.height - this.radius || this.y < this.radius)
-    //   this.vy *= -1;
 
     this.x += (this.pushX *= this.friction) + this.vx;
     this.y += (this.pushY *= this.friction) + this.vy;
@@ -104,10 +99,10 @@ class Effect {
     this.createParticles();
 
     this.mouse = {
-      x: 0,
-      y: 0,
+      x: this.width / 2,
+      y: this.height / 2,
       pressed: false,
-      radius: 150,
+      radius: 120,
     };
     window.addEventListener("resize", (e) => {
       // console.log(e);
@@ -133,7 +128,7 @@ class Effect {
 
   createParticles() {
     for (let i = 0; i < this.numberOfParticles; i += 1) {
-      this.particles.push(new Particle(this));
+      this.particles.push(new Particle(this, i));
     }
   }
 
