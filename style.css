@@ -4,9 +4,21 @@
   box-sizing: border-box;
 }
 
+body {
+  background: block;
+}
+
 #canvas1 {
   /* background: linear-gradient(darkblue, lightblue); */
   position: absolute;
   top: 0;
   left: 0;
+
+  background: black;
+
+  filter: blur(7px) contrast(20);
+}
+
+#stars_sprite {
+  display: none;
 }
