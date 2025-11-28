@@ -4,9 +4,19 @@
   box-sizing: border-box;
 }
 
-#canvas1 {
-  background: linear-gradient(darkblue, lightblue);
+body {
+  background: black;
+}
+
+canvas {
   position: absolute;
   top: 0;
   left: 0;
+}
+
+#canvas1 {
+  /* background: linear-gradient(darkblue, lightblue); */
+  background: black;
+
+  filter: blur(7px) contrast(20);
 }

@@ -3,21 +3,23 @@ const canvas = document.getElementById("canvas1");
 const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
+ctx.fillStyle = "white";
+ctx.strokeStyle = "white";
 
-const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height); // x0 y0 x1 y1
-gradient.addColorStop(0, "white");
-gradient.addColorStop(0.5, "gold");
-gradient.addColorStop(1, "orangered");
-
-ctx.fillStyle = gradient;
-ctx.strokeStyle = gradient;
+const canvas2 = document.getElementById("canvas2");
+const ctx2 = canvas2.getContext("2d");
+canvas2.width = window.innerWidth;
+canvas2.height = window.innerHeight;
+ctx2.strokeStyle = "blue";
+ctx2.lineWidth = 3;
 
 class Particle {
   constructor(effect, index) {
     this.index = index;
     this.effect = effect;
-    this.radius = Math.floor(Math.random() * 10 + 1);
-
+    0;
+    this.radius = Math.floor(Math.random() * 15 + 7);
+    this.buffer = this.radius * 4;
     this.x =
       this.radius + Math.random() * (this.effect.width - this.radius * 2);
     this.y =
@@ -40,31 +42,31 @@ class Particle {
       const dx = this.x - this.effect.mouse.x;
       const dy = this.y - this.effect.mouse.y;
       const distance = Math.hypot(dx, dy);
-      const force = this.effect.mouse.radius / distance;
+      const force = distance / this.effect.mouse.radius;
       if (distance < this.effect.mouse.radius) {
         const angle = Math.atan2(dy, dx);
-        this.pushY += Math.sin(angle) * force;
-        this.pushX += Math.cos(angle) * force;
+        this.pushX -= Math.cos(angle) * force;
+        this.pushY -= Math.sin(angle) * force;
       }
     }
 
     this.x += (this.pushX *= this.friction) + this.vx;
     this.y += (this.pushY *= this.friction) + this.vy;
 
-    if (this.x < this.radius) {
-      this.x = this.radius;
+    if (this.x < this.buffer) {
+      this.x = this.buffer;
       this.vx *= -1;
     }
-    if (this.x > this.effect.width - this.radius) {
-      this.x = this.effect.width - this.radius;
+    if (this.x > this.effect.width - this.buffer) {
+      this.x = this.effect.width - this.buffer;
       this.vx *= -1;
     }
-    if (this.y < this.radius) {
-      this.y = this.radius;
+    if (this.y < this.buffer) {
+      this.y = this.buffer;
       this.vy *= -1;
     }
-    if (this.y > this.effect.height - this.radius) {
-      this.y = this.effect.height - this.radius;
+    if (this.y > this.effect.height - this.buffer) {
+      this.y = this.effect.height - this.buffer;
       this.vy *= -1;
     }
   }
@@ -119,8 +121,8 @@ class Effect {
     }
   }
 
-  handleParticles(context) {
-    this.connectParticles(context);
+  handleParticles(context, context2) {
+    this.connectParticles(context2);
     this.particles.forEach((particle) => {
       particle.draw(context);
       particle.update();
@@ -155,11 +157,8 @@ class Effect {
     this.width = width;
     this.height = height;
     // resize event resets context to its default so:
-    const gradient = ctx.createLinearGradient(0, 0, width, height); // x0 y0 x1 y1
-    gradient.addColorStop(0, "white");
-    gradient.addColorStop(0.5, "gold");
-    gradient.addColorStop(1, "orangered");
-    this.context.fillStyle = gradient;
+
+    this.context.fillStyle = "white";
     this.context.strokeStyle = "white";
 
     this.particles.forEach((particle) => particle.reset());
@@ -170,7 +169,8 @@ const effect = new Effect(canvas, ctx);
 
 function animate() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  effect.handleParticles(ctx);
+  ctx2.clearRect(0, 0, canvas.width, canvas.height);
+  effect.handleParticles(ctx, ctx2);
   requestAnimationFrame(animate);
 }
 animate();
