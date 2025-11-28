@@ -5,75 +5,97 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height); // x0 y0 x1 y1
-gradient.addColorStop(0, "white");
-gradient.addColorStop(0.5, "gold");
-gradient.addColorStop(1, "orangered");
+gradient.addColorStop(0, "darkblue");
+gradient.addColorStop(0.5, "white");
+gradient.addColorStop(1, "lightblue");
 
 ctx.fillStyle = gradient;
 ctx.strokeStyle = gradient;
 
 class Particle {
-  constructor(effect, index) {
-    this.index = index;
+  constructor(effect) {
+    // this.index = index;
     this.effect = effect;
-    this.radius = Math.floor(Math.random() * 10 + 1);
-
+    this.radius = Math.floor(Math.random() * 7 + 3);
     this.x =
       this.radius + Math.random() * (this.effect.width - this.radius * 2);
     this.y =
-      this.radius + Math.random() * (this.effect.height - 2 * this.radius);
-    this.vx = Math.random() * 1 - 0.5;
-    this.vy = Math.random() * 1 - 0.5;
+      // -this.radius - this.effect.maxDistance
+      -Math.random() * this.effect.height * 0.2;
 
-    this.pushX = 0;
-    this.pushY = 0;
+    // this.radius + Math.random() * (this.effect.height - 2 * this.radius);
+    this.vx = Math.random() * 1 - 0.5;
+    this.vy = 0;
+    this.gravity = this.radius * 0.001;
     this.friction = 0.8;
+    this.width = this.radius * 2;
+    this.height = this.radius * 2;
+
+    this.color = "white";
   }
   draw(context) {
     context.beginPath();
     context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     context.fill();
+    //for collision detection
+    if (this.effect.debug) {
+      context.fillStyle = this.color;
+      context.fillRect(
+        this.x - this.radius,
+        this.y - this.radius,
+        this.radius * 2,
+        this.radius * 2
+      );
+    }
   }
 
   update() {
-    if (this.effect.mouse.pressed) {
-      const dx = this.x - this.effect.mouse.x;
-      const dy = this.y - this.effect.mouse.y;
-      const distance = Math.hypot(dx, dy);
-      const force = this.effect.mouse.radius / distance;
-      if (distance < this.effect.mouse.radius) {
-        const angle = Math.atan2(dy, dx);
-        this.pushY += Math.sin(angle) * force;
-        this.pushX += Math.cos(angle) * force;
-      }
-    }
+    this.vy += this.gravity;
 
-    this.x += (this.pushX *= this.friction) + this.vx;
-    this.y += (this.pushY *= this.friction) + this.vy;
+    this.x += this.vx;
+    this.y += this.vy;
 
-    if (this.x < this.radius) {
-      this.x = this.radius;
-      this.vx *= -1;
+    if (
+      this.y > this.effect.height + this.radius + this.effect.maxDistance ||
+      this.x < -this.radius - this.effect.maxDistance ||
+      this.x > this.effect.width + this.radius + this.effect.maxDistance
+    ) {
+      this.reset();
+      // this.y = this.effect.height - this.radius;
+      // this.vy *= -0.6;
     }
-    if (this.x > this.effect.width - this.radius) {
-      this.x = this.effect.width - this.radius;
-      this.vx *= -1;
-    }
-    if (this.y < this.radius) {
-      this.y = this.radius;
-      this.vy *= -1;
-    }
-    if (this.y > this.effect.height - this.radius) {
-      this.y = this.effect.height - this.radius;
-      this.vy *= -1;
-    }
+    //collision detection:
+    // if (
+    //   rect1.x < rect2.x + rect2.w &&
+    //   rect1.x + rect1.x > rect2.x &&
+    //   rect1.y < rect2.y + rect2.h &&
+    //   rect1.h + rect1.y > rect2.y
+    // ) {
+    //   //collision detected!
+    // }
+    if (
+      this.x - this.radius <
+        this.effect.element.x + this.effect.element.width &&
+      this.x + this.radius > this.effect.element.x &&
+      this.y - this.radius <
+        this.effect.element.y + this.effect.element.height &&
+      this.y + this.radius > this.effect.element.y
+    ) {
+      //collision detected!
+      this.color = "red";
+    } else this.color = "blue";
   }
 
   reset() {
+    this.vy = 0;
+
     this.x =
       this.radius + Math.random() * (this.effect.width - this.radius * 2);
     this.y =
-      this.radius + Math.random() * (this.effect.height - this.radius * 2);
+      -this.radius -
+      this.effect.maxDistance -
+      Math.random() * this.effect.height * 0.2;
+    // this.radius + Math.random() * (this.effect.height - this.radius * 2);
   }
 }
 
@@ -84,8 +106,24 @@ class Effect {
     this.width = this.canvas.width;
     this.height = this.canvas.height;
     this.particles = [];
-    this.numberOfParticles = Math.floor(Math.random() * 200 + 400);
+    // this.numberOfParticles = Math.floor(Math.random() * 200 + 100);
+    this.numberOfParticles = 30;
     this.createParticles();
+
+    this.debug = true;
+    // const canvasRect = this.canvas.getBoundingClientRect();
+    // const captionRect = document
+    //   .getElementById("caption")
+    //   .getBoundingClientRect();
+    // console.log(canvasRect, captionRect);
+    // this.element = {
+    //   x: captionRect.x - canvasRect.x,
+    //   y: captionRect.y - canvasRect.y,
+    //   width: captionRect.width,
+    //   height: captionRect.height,
+    // };
+    // console.log(this.element);
+    this.element = document.getElementById("caption").getBoundingClientRect();
 
     this.mouse = {
       x: 0,
@@ -93,6 +131,12 @@ class Effect {
       pressed: false,
       radius: 200,
     };
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "d") {
+        this.debug = !this.debug;
+      }
+    });
 
     window.addEventListener("resize", (e) => {
       this.resize(e.target.window.innerWidth, e.target.window.innerHeight);
@@ -125,19 +169,27 @@ class Effect {
       particle.draw(context);
       particle.update();
     });
+    if (this.debug) {
+      context.strokeRect(
+        this.element.x,
+        this.element.y,
+        this.element.width,
+        this.element.height
+      );
+    }
   }
 
   connectParticles(context) {
-    const maxDistance = 60;
+    this.maxDistance = 100;
     for (let a = 0; a < this.particles.length; a += 1) {
       for (let b = a; b < this.particles.length; b += 1) {
         const dx = this.particles[a].x - this.particles[b].x;
         const dy = this.particles[a].y - this.particles[b].y;
         // const distance = Math.sqrt(dx * dx + dy * dy);
         const distance = Math.hypot(dx, dy); // same
-        if (distance < maxDistance) {
+        if (distance < this.maxDistance) {
           context.save();
-          const opacity = 1 - distance / maxDistance;
+          const opacity = 1 - distance / this.maxDistance;
           context.globalAlpha = opacity;
           context.beginPath();
           context.moveTo(this.particles[a].x, this.particles[a].y);
@@ -156,9 +208,9 @@ class Effect {
     this.height = height;
     // resize event resets context to its default so:
     const gradient = ctx.createLinearGradient(0, 0, width, height); // x0 y0 x1 y1
-    gradient.addColorStop(0, "white");
-    gradient.addColorStop(0.5, "gold");
-    gradient.addColorStop(1, "orangered");
+    gradient.addColorStop(0, "darkblue");
+    gradient.addColorStop(0.5, "white");
+    gradient.addColorStop(1, "lightblue");
     this.context.fillStyle = gradient;
     this.context.strokeStyle = "white";
 
